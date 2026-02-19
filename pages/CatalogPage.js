@@ -12,6 +12,8 @@ class CatalogPage {
 
     // Универсальный локатор для карточки товара
     this.productCard = page.locator('a.group.flex');
+
+    this.toastMessage = page.locator('[data-sonner-toast] [data-title]');
   }
 
   async navigate() {
@@ -26,7 +28,7 @@ class CatalogPage {
 
   // Добавить товар в корзину по имени
   async addProductToCart(productName) {
-    const card = this.page.locator('a.group.flex', { hasText: productName });
+    const card = this.page.locator('div').filter({ hasText: productName }).first();
     await card.locator('button', { name: 'В корзину' }).click();
   }
 
@@ -38,6 +40,11 @@ class CatalogPage {
   // Метод для проверки наличия товара в каталоге
   async isProductVisible(productName) {
     return await this.page.locator('a.group.flex', { hasText: productName }).isVisible();
+  }
+
+  async getNotificationText() {
+    await expect(this.toastMessage).toBeVisible();
+    return await this.toastMessage.textContent();
   }
 }
 

@@ -34,7 +34,7 @@ class LoginPage {
 
   // Метод для получения текста ошибки
   async getErrorMessageText() {
-    await expect(this.errorContainer).toBeVisible();
+    await expect(this.errorMessage).toBeVisible();
     return await this.errorMessage.textContent();
   }
 }
