@@ -1,8 +1,9 @@
 const { expect } = require('@playwright/test');
+const { BasePage } = require('./BasePage');
 
-class AdminPage {
+class AdminPage extends BasePage {
   constructor(page) {
-    this.page = page;
+    super(page);
 
     // Ссылка "Админ-панель"
     this.adminTitleLink = page.locator('a:has-text("Админ-панель")');
@@ -41,7 +42,7 @@ class AdminPage {
 
   // Переход в админку
   async navigate() {
-    await this.page.goto('/admin');
+    await this.open('/admin');
   }
 
   // Возврат на главную страницу через клик по "Админ-панель"
@@ -76,45 +77,48 @@ class AdminPage {
 
   // Создать новый товар
   async createProduct(product) {
-    await this.createProductButton.click();
+    await this.step(`Создание товара: ${product.name}`, async () => {
+      await this.clickElement(this.createProductButton, 'Кнопка Создать товар');
 
-    await this.nameInput.fill(product.name);
-    await this.priceInput.fill(product.price.toString());
-    if (product.description) {
-        await this.descriptionInput.fill(product.description);
-    }
-    if (product.urlImage) {
-      await this.imageInput.fill(product.urlImage);
-    }
-    if (product.category) {
-       await this.categoryDropdown.click();
-       await this.page.getByRole('option', { name: product.category }).click();
-    }
+      await this.fillField(this.nameInput, product.name, 'Название товара');
+      await this.fillField(this.priceInput, product.price.toString(), 'Цена');
 
-    await this.saveButton.click();
+      if (product.description) await this.fillField(this.descriptionInput, product.description, 'Описание');
+      if (product.urlImage) await this.fillField(this.imageInput, product.urlImage, 'URL картинки');
+
+      if (product.category) {
+        await this.clickElement(this.categoryDropdown, 'Выпадающий список категорий');
+         await this.clickElement(this.page.getByRole('option', { name: product.category }), `Категория ${product.category}`);
+      }
+
+      await this.clickElement(this.saveButton, 'Кнопка Сохранить');
+    });
   }
 
   // Удаление товара
   async deleteProduct(productName) {
-    const row = this.page.getByRole('row').filter({ hasText: productName });
-    
-    await row.getByRole('button').last().click();
+    await this.step(`Удаление товара "${productName}"`, async () => {
+      const row = this.page.getByRole('row').filter({ hasText: productName });
+      const deleteBtn = row.getByRole('button', { name: 'Удалить' });
+      await this.clickElement(deleteBtn, 'Кнопка Удалить');
+    });
   }
 
   // Редактирование товара
   async editProductPrice(productName, newPrice) {
-    const row = this.page.getByRole('row').filter({ hasText: productName });
-    
-    await row.getByRole('button').first().click(); 
+    await this.step(`Изменение цены товара "${productName}" на ${newPrice}`, async () => {
+      const row = this.page.getByRole('row').filter({ hasText: productName });
+      
+      await row.getByRole('button').first().click(); 
 
-    await this.priceInput.fill(newPrice.toString());
-    await this.saveButton.click();
+      await this.fillField(this.priceInput, newPrice.toString(), 'Поле Цена');
+      await this.clickElement(this.saveButton, 'Кнопка Сохранить');
+    });
   }
 
   // Получить текст уведомления
   async getNotificationText() {
-    await expect(this.toastMessage).toBeVisible();
-    return await this.toastMessage.textContent();
+    return await this.getElementText(this.toastMessage, 'Уведомление админки');
   }
 };
 

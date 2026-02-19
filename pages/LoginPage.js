@@ -1,8 +1,9 @@
 const { expect } = require('@playwright/test');
+const { BasePage } = require('./BasePage');
 
-class LoginPage {
+class LoginPage extends BasePage {
   constructor(page) {
-    this.page = page;
+    super(page);
 
     this.emailInput = page.locator('input[name="email"]');
     this.passwordInput = page.locator('input[name="password"]');
@@ -16,26 +17,25 @@ class LoginPage {
 
   // Перейти на страницу Логина
   async navigate() {
-    await this.page.goto('/login');
+    await this.open('/login');
   }
 
   // Войти в систему
   async login(email, password) {
-    await this.emailInput.fill(email);
-    await this.passwordInput.fill(password);
-    await this.loginButton.click();
+    await this.fillField(this.emailInput, email, 'Поле Email');
+    await this.fillField(this.passwordInput, password, 'Поле Пароль');
+    await this.clickElement(this.loginButton, 'Кнопка Войти');
   }
 
   // Перейти к регистрации
   async navigateToRegistration() {
-    await this.registerLink.click();
+    await this.clickElement(this.registerLink, 'Ссылка регистрации');
     await expect(this.page).toHaveURL('/register');
   }
 
   // Метод для получения текста ошибки
   async getErrorMessageText() {
-    await expect(this.errorMessage).toBeVisible();
-    return await this.errorMessage.textContent();
+    return await this.getElementText(this.errorMessage, 'Сообщение об ошибке');
   }
 }
 

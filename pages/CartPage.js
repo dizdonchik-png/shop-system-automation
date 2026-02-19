@@ -1,8 +1,9 @@
 const { expect } = require('@playwright/test');
+const { BasePage } = require('./BasePage');
 
-class CartPage {
+class CartPage extends BasePage {
   constructor(page) {
-    this.page = page;
+    super(page);
 
     // Заголовок H1
     this.title = page.getByRole('heading', { name: 'Ваша Корзина' });
@@ -21,28 +22,34 @@ class CartPage {
   }
 
   async navigate() {
-    await this.page.goto('/cart');
+    await this.open('/cart');
   }
 
   // Метод для удаления товара из корзины
   async removeItem(productName) {
-    const row = this.cartItemRow.filter({
-      has: this.page.locator('h4', { hasText: productName })
+    await this.step(`Удаление товара "${productName}" из корзины`, async () => {
+      const row = this.cartItemRow.filter({
+        has: this.page.locator('h4', { hasText: productName })
+      });
+      const deleteBtn = row.getByRole('button', { name: 'Удалить' });
+        await this.clickElement(deleteBtn, `Кнопка Удалить для ${productName}`);
+
+      await expect(row).toBeHidden();
     });
-    await row.getByRole('button', { name: 'Удалить' }).click();
-    await expect(row).toBeHidden();
   }
 
   // Получение текста итоговой суммы
   async getTotalPrice() {
-    return await this.totalPrice.textContent();
+    return await this.getElementText(this.totalPrice, 'Итоговая цена');
   }
 
   // Оформление заказа
   async clickCheckout() {
-    await expect(this.checkoutButton).toBeEnabled(); 
-    await this.checkoutButton.click();
-    await expect(this.page).toHaveURL('/');
+    await this.step('Оформление заказа', async () => {
+      await expect(this.checkoutButton).toBeEnabled(); 
+      await this.clickElement(this.checkoutButton, 'Кнопка Оформить заказ');
+      await expect(this.page).toHaveURL('/');
+    });
   }
 
   // Проверка, что корзина пуста
@@ -52,8 +59,7 @@ class CartPage {
 
   // Получить текст уведомления
   async getNotificationText() {
-    await expect(this.toastMessage).toBeVisible();
-    return await this.toastMessage.textContent();
+    return await this.getElementText(this.toastMessage, 'Уведомление корзины');
   }
 }
 

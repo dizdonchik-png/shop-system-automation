@@ -1,8 +1,9 @@
 const { expect } = require('@playwright/test');
+const { BasePage } = require('./BasePage');
 
-class Header {
+class Header extends BasePage {
   constructor(page) {
-    this.page = page;
+    super(page);
 
     // Логотип
     this.logoLink = page.getByRole('link', { name: 'Shop System' });
@@ -24,7 +25,7 @@ class Header {
 
   // Переход в Корзину
   async openCart() {
-    await this.cartLink.click();
+    await this.clickElement(this.cartLink, 'Иконка корзины');
     await expect(this.page).toHaveURL('/cart');
   }
 
@@ -38,9 +39,11 @@ class Header {
 
   // 1. Перейти в Профиль
   async openProfile() {
-    await this.userMenuButton.click();
-    await this.profileMenuItem.click();
-    await expect(this.page).toHaveURL('/profile');
+    await this.step('Переход в профиль через меню', async () => {
+      await this.clickElement(this.userMenuButton, 'Меню пользователя');
+      await this.clickElement(this.profileMenuItem, 'Пункт Профиль');
+      await expect(this.page).toHaveURL('/profile');
+    });
   }
 
   // 2. Перейти в Историю заказов
@@ -52,9 +55,11 @@ class Header {
 
   // 3. Выйти из системы
   async logout() {
-    await this.userMenuButton.click(); // Открываем меню
-    await this.logoutMenuItem.click(); // Кликаем Выйти
-    await expect(this.page).toHaveURL('/login');
+    await this.step('Выход из системы', async () => {
+      await this.clickElement(this.userMenuButton, 'Меню пользователя');
+      await this.clickElement(this.logoutMenuItem, 'Пункт Выйти');
+      await expect(this.page).toHaveURL('/login');
+    });
   }
 }
 

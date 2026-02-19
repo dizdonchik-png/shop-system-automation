@@ -1,8 +1,9 @@
 const { expect } = require('@playwright/test');
+const { BasePage } = require('./BasePage');
 
-class CatalogPage {
+class CatalogPage extends BasePage {
   constructor(page) {
-    this.page = page;
+    super(page);
 
     // Заголовок страницы "Каталог товаров"
     this.pageTitle = page.getByRole('heading', { name: 'Каталог товаров' });
@@ -17,19 +18,25 @@ class CatalogPage {
   }
 
   async navigate() {
-    await this.page.goto('/');
+    await this.open('/');
   }
 
   // Проверка, что каталог загрузился
   async verifyCatalogLoaded() {
-    await expect(this.pageTitle).toBeVisible();
-    await expect(this.productsGrid).toBeVisible();
+    await this.step('Проверка загрузки каталога', async () => {
+      await expect(this.pageTitle).toBeVisible();
+      await expect(this.productsGrid).toBeVisible();
+    });
   }
 
   // Добавить товар в корзину по имени
   async addProductToCart(productName) {
-    const card = this.page.locator('div').filter({ hasText: productName }).first();
-    await card.locator('button', { name: 'В корзину' }).click();
+    await this.step(`Добавление товара "${productName}" в корзину`, async () => {
+      const card = this.page.locator('div').filter({ hasText: productName }).first();
+      const addButton = card.getByRole('button', { name: /в корзину/i });
+      
+      await this.clickElement(addButton, `Кнопка "В корзину" для ${productName}`);
+    });
   }
 
   // Клик по карточке товара для перехода к деталям
@@ -43,8 +50,7 @@ class CatalogPage {
   }
 
   async getNotificationText() {
-    await expect(this.toastMessage).toBeVisible();
-    return await this.toastMessage.textContent();
+    return await this.getElementText(this.toastMessage, 'Тоаст уведомление');
   }
 }
 
