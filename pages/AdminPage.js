@@ -37,7 +37,7 @@ class AdminPage extends BasePage {
     this.warehouseAddressInput = page.locator('input[placeholder="Адрес"]');
 
     // Уведомления
-    this.toastMessage = page.locator('[data-sonner-toast] [data-title]');
+    this.toastMessage = page.locator('[data-sonner-toast] [data-title]').first();
   }
 
   // Переход в админку
@@ -53,7 +53,7 @@ class AdminPage extends BasePage {
 
   // Переключение на вкладку "Товары"
   async openProductsTab() {
-    await this.productsTab.click();
+    await this.clickElement(this.productsTab, 'Вкладка Товары');
     await expect(this.page).toHaveURL(/\/admin\/products/);
   }
 

@@ -15,10 +15,10 @@ class CartPage extends BasePage {
     // Локатор для всех строк товаров в корзине
     this.cartItemRow = page.locator('div.flex.items-center.justify-between.p-4.border-b');
 
-    this.emptyMessage = page.getByText('Ваша корзина пуста');
+    this.emptyMessage = page.getByText('Ваша корзина пуста.');
 
     // Уведомления
-    this.toastMessage = page.locator('[data-sonner-toast] [data-title]');
+    this.toastMessage = page.locator('[data-sonner-toast] [data-title]').first();
   }
 
   async navigate() {

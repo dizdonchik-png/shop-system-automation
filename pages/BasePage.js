@@ -35,10 +35,10 @@ class BasePage {
   async step(description, action) {
     const { test } = require('@playwright/test'); 
     try {
-        await test.step(description, action);
+        return await test.step(description, action);
     } catch (e) {
         console.log(`[LOG]: ${description}`);
-        await action();
+        return await action();
     }
   }
 };

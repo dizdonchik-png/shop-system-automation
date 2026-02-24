@@ -16,7 +16,7 @@ class RegisterPage extends BasePage {
     
     this.loginLink = page.getByRole('link', { name: 'Войти'});
 
-    this.notificationMessage = page.locator('[data-sonner-toast] [data-title]');
+    this.notificationMessage = page.locator('[data-sonner-toast] [data-title]').first();
   }
 
   // Переход на страницу регистрации

@@ -13,7 +13,7 @@ class ProfilePage extends BasePage {
 
     this.saveButton = page.getByRole('button', { name: 'Сохранить изменения'});
 
-    this.notificationMessage = page.locator('[data-sonner-toast] [data-title]');
+    this.notificationMessage = page.locator('[data-sonner-toast] [data-title]').first();
   }
 
   // Переход на страницу Профиля

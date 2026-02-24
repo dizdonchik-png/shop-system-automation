@@ -14,7 +14,7 @@ class CatalogPage extends BasePage {
     // Универсальный локатор для карточки товара
     this.productCard = page.locator('a.group.flex');
 
-    this.toastMessage = page.locator('[data-sonner-toast] [data-title]');
+    this.toastMessage = page.locator('[data-sonner-toast] [data-title]').first();
   }
 
   async navigate() {
@@ -32,8 +32,8 @@ class CatalogPage extends BasePage {
   // Добавить товар в корзину по имени
   async addProductToCart(productName) {
     await this.step(`Добавление товара "${productName}" в корзину`, async () => {
-      const card = this.page.locator('div').filter({ hasText: productName }).first();
-      const addButton = card.getByRole('button', { name: /в корзину/i });
+      const card = this.page.locator('a.group.flex').filter({ hasText: productName });
+      const addButton = card.locator('button', { name: 'В корзину' });
       
       await this.clickElement(addButton, `Кнопка "В корзину" для ${productName}`);
     });

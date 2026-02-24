@@ -10,7 +10,7 @@ class LoginPage extends BasePage {
 
     this.loginButton = page.getByRole('button', { name: 'Войти'});
     
-    this.errorMessage = page.locator('[data-sonner-toast] [data-title]');
+    this.errorMessage = page.locator('[data-sonner-toast] [data-title]').first();
     
     this.registerLink = page.getByRole('link', { name: /зарегистрироваться/i });
   }
