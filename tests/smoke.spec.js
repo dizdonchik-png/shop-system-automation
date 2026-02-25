@@ -1,3 +1,4 @@
+// Наборы smoke E2E tests для Shop System
 const { test, expect } = require('@playwright/test');
 
 const { LoginPage } = require('../pages/LoginPage');
