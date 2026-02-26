@@ -11,6 +11,8 @@ class RegisterPage extends BasePage {
     this.usernameInput = page.locator('input[name="username"]');
     this.phoneNumberInput = page.locator('input[name="phoneNumber"]');
     this.passwordInput = page.locator('input[name="password"]');
+    // Локатор для лейбла поля "Пароль"
+    this.passwordLabel = page.locator('label').filter({ hasText: 'Пароль' });
 
     this.registerButton = page.getByRole('button', { name: 'Зарегистрироваться'});
     
@@ -42,6 +44,35 @@ class RegisterPage extends BasePage {
   async navigateToLogin() {
     await this.clickElement(this.loginLink, 'Ссылка Войти');
     await expect(this.page).toHaveURL('/login');
+  }
+
+  // Проверка текста во всплывающем уведомлении
+  async verifyNotificationText(expectedText) {
+    await expect(this.notificationMessage).toBeVisible();
+    await expect(this.notificationMessage).toContainText(expectedText);
+  }
+
+  // Проверка успешного редиректа на страницу логина
+  async verifySuccessfulRegistration() {
+    await expect(this.page).toHaveURL('/login');
+  }
+
+  // Проверка ошибки пароля (красный текст и фокус)
+  async verifyPasswordValidationError() {
+    await expect(this.passwordLabel).toHaveClass(/text-destructive/);
+    await expect(this.passwordLabel).toHaveCSS('color', 'rgb(127, 29, 29)');
+    await expect(this.passwordInput).toBeFocused();
+  }
+
+  // Метод для исправления пароля и повторной отправки формы
+  async fixPasswordAndSubmit(newPassword) {
+    await this.passwordInput.fill(newPassword);
+    await this.registerButton.click();
+  }
+
+  // Проверка, что мы все еще находимся на странице регистрации
+  async verifyRemainsOnPage() {
+    await expect(this.page).toHaveURL('/register');
   }
 }
 

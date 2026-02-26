@@ -8,9 +8,14 @@ class LoginPage extends BasePage {
     this.emailInput = page.locator('input[name="email"]');
     this.passwordInput = page.locator('input[name="password"]');
 
+    // локаторы для ошибок в полях
+    this.emailErrorMessage = page.getByText('Email обязателен');
+    this.passwordErrorMessage = page.getByText('Пароль обязателен');
+
     this.loginButton = page.getByRole('button', { name: 'Войти'});
     
-    this.errorMessage = page.locator('[data-sonner-toast] [data-title]').first();
+    // Локатор для уведомлений
+    this.toastMessage = page.locator('[data-sonner-toast] [data-title]').first();
     
     this.registerLink = page.getByRole('link', { name: /зарегистрироваться/i });
   }
@@ -18,6 +23,16 @@ class LoginPage extends BasePage {
   // Перейти на страницу Логина
   async navigate() {
     await this.open('/login');
+  }
+
+  // Проверка успешной загрузки страницы после логина
+  async verifySuccessfulLogin() {
+    await expect(this.page).toHaveURL('/');
+  }
+
+  // Проверка, что пользователь остался на странице логина (для негативных тестов)
+  async verifyRemainsOnPage() {
+    await expect(this.page).toHaveURL('/login');
   }
 
   // Войти в систему
@@ -33,9 +48,38 @@ class LoginPage extends BasePage {
     await expect(this.page).toHaveURL('/register');
   }
 
+  // Проверка перенаправления на логин при попытке зайти на закрытую страницу
+  async verifyAccessDenied(protectedUrl) {
+    await this.page.goto(protectedUrl);
+    await expect(this.page).toHaveURL('/login');
+  }
+
   // Метод для получения текста ошибки
-  async getErrorMessageText() {
-    return await this.getElementText(this.errorMessage, 'Сообщение об ошибке');
+  async getToastMessageText() {
+    return await this.getElementText(this.toastMessage, 'Текст уведомления');
+  }
+
+  // Метод проверки текста уведомления
+  async verifyNotificationText(expectedText) {
+    await expect(this.toastMessage.first()).toBeVisible();
+    await expect(this.toastMessage.first()).toContainText(expectedText);
+  }
+
+  // Проверка текста основной ошибки (неверный email/пароль)
+  async verifyErrorMessageText(expectedText) {
+    const actualText = await this.getToastMessageText(); 
+    expect(actualText).toContain(expectedText);
+  }
+
+  // Проверка ошибок для пустых полей
+  async verifyEmptyFieldsErrors() {
+    await expect(this.emailErrorMessage).toBeVisible();
+    await expect(this.passwordErrorMessage).toBeVisible();
+  }
+
+  // Клик по кнопке "Войти" (без заполнения полей)
+  async clickLoginButton() {
+    await this.clickElement(this.loginButton, 'Кнопка "Войти"');
   }
 }
 
