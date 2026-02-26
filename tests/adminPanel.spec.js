@@ -1,4 +1,7 @@
 const { test, expect } = require('@playwright/test');
+const { ADMIN } = require('../test-data/credentials'); 
+
+const { generateTestProduct } = require('../test-data/productData'); 
 
 const { LoginPage } = require('../pages/LoginPage');
 const { AdminPage } = require('../pages/AdminPage');
@@ -9,7 +12,7 @@ test.describe('Admin Panel Module', () => {
   test.beforeEach(async ({ page }) => {
     const loginPage = new LoginPage(page);
     await loginPage.navigate();
-    await loginPage.login('admin@test.com', 'admin123'); 
+    await loginPage.login(ADMIN.email, ADMIN.password); 
     await expect(page).toHaveURL('/');
 
     const adminPage = new AdminPage(page);
@@ -27,25 +30,17 @@ test.describe('Admin Panel Module', () => {
   });
 
   test('TC#3: Dashboard Overview content @TC3', async ({ page }) => {
-    await expect(page).toHaveURL('/admin');
-    const welcomeMessage = page.locator('div.font-semibold.leading-none.tracking-tight', { hasText: 'Добро пожаловать!' });
-    await expect(welcomeMessage).toBeVisible();
+    const adminPage = new AdminPage(page);
+
+    await adminPage.verifyDashboardLoaded();
   });
 
   test('TC#4: Create a new product @TC4', async ({ page }) => {
     const adminPage = new AdminPage(page);
     await adminPage.openProductsTab();
 
-    const uniqueId = Date.now();
-    const productName = `Auto Product ${uniqueId}`;
-
-    await adminPage.createProduct({
-      name: productName,
-      price: 999,
-      description: 'AQA Test Description',
-      urlImage: 'https://placehold.co/600x400',
-      category: 'Электроника'
-    });
+    const testProduct = generateTestProduct(); 
+    await adminPage.createProduct(testProduct);
 
     const toastText = await adminPage.getNotificationText();
     expect(toastText).toContain('Товар успешно создан');
@@ -55,20 +50,15 @@ test.describe('Admin Panel Module', () => {
     const adminPage = new AdminPage(page);
     await adminPage.openProductsTab();
 
-    const uniqueId = Date.now();
-    const productName = `To Edit ${uniqueId}`;
-    await adminPage.createProduct({ 
-      name: productName,
-      price: 999,
-      description: 'AQA Test Description',
-      urlImage: 'https://placehold.co/600x400',
-      category: 'Одежда'
-    });
-    
-    await expect(adminPage.toastMessage).toBeVisible();
-    await expect(adminPage.toastMessage).toBeHidden({ timeout: 10000 }); 
+    const testProduct = generateTestProduct(); 
+    await adminPage.createProduct(testProduct);
 
-    await adminPage.editProductPrice(productName, 250);
+    const createToast = await adminPage.getNotificationText();
+    expect(createToast).toContain('Товар успешно создан');
+    // ждем пока уведомление скроется
+    await adminPage.waitForNotificationToHide(); 
+
+    await adminPage.editProductPrice(testProduct.name, 250);
 
     const toastTextUpdate = await adminPage.getNotificationText();
     expect(toastTextUpdate).toContain('Товар успешно обновлен');
@@ -78,23 +68,18 @@ test.describe('Admin Panel Module', () => {
     const adminPage = new AdminPage(page);
     await adminPage.openProductsTab();
 
-    const uniqueId = Date.now();
-    const productName = `To Delete ${uniqueId}`;
-    await adminPage.createProduct({ 
-      name: productName,
-      price: 999,
-      description: 'AQA Test Description',
-      urlImage: 'https://placehold.co/600x400',
-      category: 'Одежда' 
-    });
+    const testProduct = generateTestProduct();
+    await adminPage.createProduct(testProduct);
     
-    await expect(adminPage.toastMessage).toBeVisible();
-    await expect(adminPage.toastMessage).toBeHidden({ timeout: 10000 }); 
+    const createToast = await adminPage.getNotificationText();
+    expect(createToast).toContain('Товар успешно создан');
+    // ждем пока уведомление скроется
+    await adminPage.waitForNotificationToHide(); 
 
-    await adminPage.deleteProduct(productName);
+    await adminPage.deleteProduct(testProduct.name);
 
-    const toastText = await adminPage.getNotificationText();
-    expect(toastText).toContain('Товар удален');
+    const deleteToast = await adminPage.getNotificationText();
+    expect(deleteToast).toContain('Товар удален');
   });
 
   test('TC#7: Create a new warehouse @TC7', async ({ page }) => {
@@ -102,10 +87,7 @@ test.describe('Admin Panel Module', () => {
     await adminPage.openWarehouses();
 
     const uniqueId = Date.now();
-    await adminPage.createWarehouseButton.click();
-    await adminPage.warehouseNameInput.fill(`Склад ${uniqueId}`);
-    await adminPage.warehouseAddressInput.fill(`Адрес ${uniqueId}`);
-    await adminPage.saveButton.click();
+    await adminPage.createWarehouse(`Склад ${uniqueId}`, `Адрес ${uniqueId}`);
 
     const toastText = await adminPage.getNotificationText();
     expect(toastText).toContain('Склад создан');
@@ -114,19 +96,13 @@ test.describe('Admin Panel Module', () => {
   test('TC#8: Update Order Status @TC8', async ({ page }) => {
     const adminPage = new AdminPage(page);
     await adminPage.openOrders();
-
-    const firstOrderRow = page.getByRole('row').nth(1); 
     
-    const statusDropdown = firstOrderRow.getByRole('combobox');
-    await statusDropdown.click();
-    
-    await page.getByRole('option', { name: 'DELIVERED' }).click();
-
-    await expect(firstOrderRow).toContainText('DELIVERED');
+    // Меняем статус во 2-й строке на DELIVERED
+    await adminPage.updateOrderStatus(1, 'DELIVERED');
+    await adminPage.verifyOrderStatus(1, 'DELIVERED');
 
     await page.reload();
-    const reloadedOrderRow = page.getByRole('row').nth(1);
-    await expect(reloadedOrderRow).toContainText('DELIVERED');
+    await adminPage.verifyOrderStatus(1, 'DELIVERED');
   });
 
 });
