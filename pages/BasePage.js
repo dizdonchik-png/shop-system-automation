@@ -32,6 +32,18 @@ class BasePage {
     });
   }
 
+  // Проверка видимости элемента
+  async verifyElementVisible(locator, elementName) {
+    return await this.step(`Проверка видимости элемента: "${elementName}"`, async () => {
+      try {
+        await expect(locator).toBeVisible();
+      } catch (error) {
+        console.error(`❌ Элемент "${elementName}" не найден на странице!`);
+        throw error;
+      }
+    });
+  }
+
   async step(description, action) {
     const { test } = require('@playwright/test'); 
     try {

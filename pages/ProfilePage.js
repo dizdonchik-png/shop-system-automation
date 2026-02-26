@@ -28,7 +28,7 @@ class ProfilePage extends BasePage {
       if (data.lastName) await this.fillField(this.lastNameInput, data.lastName, 'Фамилия');
       if (data.email) await this.fillField(this.emailInput, data.email, 'Email');
       if (data.username) await this.fillField(this.usernameInput, data.username, 'Username');
-      if (data.phone) await this.fillField(this.phoneNumberInput, data.phone, 'Телефон');
+      if (data.phone) await this.fillField(this.phoneInput, data.phone, 'Телефон');
       
       await this.clickElement(this.saveButton, 'Кнопка Сохранить');
     });

@@ -8,6 +8,9 @@ class AdminPage extends BasePage {
     // Ссылка "Админ-панель"
     this.adminTitleLink = page.locator('a:has-text("Админ-панель")');
 
+    // Локатор для приветственного сообщения на Дашборде
+    this.welcomeMessage = page.locator('div.font-semibold.leading-none.tracking-tight', { hasText: 'Добро пожаловать!' });
+
     // Кнопка "Выйти"
     this.logoutButton = page.getByRole('button', { name: 'Выйти' });
 
@@ -16,6 +19,9 @@ class AdminPage extends BasePage {
     this.productsTab = page.locator('a[href="/admin/products"]');
     this.warehousesTab = page.locator('a[href="/admin/warehouses"]');
     this.ordersTab = page.locator('a[href="/admin/orders"]');
+
+    // Локатор для строк таблицы заказов
+    this.tableRows = page.getByRole('row');
 
     // Кнопки действий
     this.createProductButton = page.getByRole('button', { name: 'Создать товар' });
@@ -33,8 +39,8 @@ class AdminPage extends BasePage {
 
     // --- Раздел "Склады" ---
     this.createWarehouseButton = page.getByRole('button', { name: 'Создать склад' });
-    this.warehouseNameInput = page.locator('input[placeholder="Название склада"]');
-    this.warehouseAddressInput = page.locator('input[placeholder="Адрес"]');
+    this.warehouseNameInput = page.getByLabel('Название склада');
+    this.warehouseAddressInput = page.getByLabel('Адрес');
 
     // Уведомления
     this.toastMessage = page.locator('[data-sonner-toast] [data-title]').first();
@@ -43,6 +49,14 @@ class AdminPage extends BasePage {
   // Переход в админку
   async navigate() {
     await this.open('/admin');
+  }
+
+  // Проверка, что страница "Обзор"
+  async verifyDashboardLoaded() {
+    return await this.step('Проверка загрузки содержимого Дашборда', async () => {
+      await expect(this.page).toHaveURL(/\/admin/);
+      await this.verifyElementVisible(this.welcomeMessage, 'Приветственное сообщение "Добро пожаловать!"');
+    });
   }
 
   // Возврат на главную страницу через клик по "Админ-панель"
@@ -116,9 +130,39 @@ class AdminPage extends BasePage {
     });
   }
 
+  // Метод создания нового склада
+  async createWarehouse(name, address) {
+    await this.createWarehouseButton.click();
+    await this.warehouseNameInput.fill(name);
+    await this.warehouseAddressInput.fill(address);
+    await this.saveButton.click();
+  }
+
+  // Изменение статуса заказа
+  async updateOrderStatus(rowIndex, targetStatus) {
+    const orderRow = this.tableRows.nth(rowIndex); 
+    const statusDropdown = orderRow.getByRole('combobox');
+    
+    await statusDropdown.click();
+    await this.page.getByRole('option', { name: targetStatus }).click();
+  }
+
+  // Проверка статуса в таблице
+  async verifyOrderStatus(rowIndex, expectedStatus) {
+    const orderRow = this.tableRows.nth(rowIndex);
+    await expect(orderRow).toContainText(expectedStatus);
+  }
+
   // Получить текст уведомления
   async getNotificationText() {
     return await this.getElementText(this.toastMessage, 'Уведомление админки');
+  }
+
+  // Ожидание скрытия уведомления (чтобы старый тостер не перекрывал новый)
+  async waitForNotificationToHide() {
+    return await this.step('Ожидание скрытия уведомления', async () => {
+      await expect(this.toastMessage).toBeHidden({ timeout: 10000 });
+    });
   }
 };
 
