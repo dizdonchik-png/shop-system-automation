@@ -35,8 +35,9 @@ class ProfilePage extends BasePage {
   }
 
   // Получить текст уведомления
-  async getNotificationText() {
-    return await this.getElementText(this.notificationMessage, 'Уведомление профиля');
+  async verifyNotificationText(expectedText) {
+    await expect(this.notificationMessage.first()).toBeVisible();
+    await expect(this.notificationMessage.first()).toContainText(expectedText);
   }
 }
 

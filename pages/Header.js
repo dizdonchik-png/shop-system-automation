@@ -46,6 +46,11 @@ class Header extends BasePage {
     });
   }
 
+  // Проверка имени пользователя в кнопке меню
+  async verifyUserName(expectedName) {
+    await expect(this.userMenuButton).toContainText(expectedName);
+  }
+
   // 2. Перейти в Историю заказов
   async openOrders() {
     await this.userMenuButton.click();

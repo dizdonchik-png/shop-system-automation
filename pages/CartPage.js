@@ -25,6 +25,11 @@ class CartPage extends BasePage {
     await this.open('/cart');
   }
 
+  // Проверка редиректа на главную после успешного заказа
+  async verifyRedirectToHome() {
+    await expect(this.page).toHaveURL('/');
+  }
+
   // Метод для удаления товара из корзины
   async removeItem(productName) {
     await this.step(`Удаление товара "${productName}" из корзины`, async () => {

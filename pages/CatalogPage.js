@@ -51,7 +51,14 @@ class CatalogPage extends BasePage {
       const card = this.page.locator('a.group.flex').filter({ hasText: productName }).first();
       const addButton = card.locator('button', { name: 'В корзину' });
       
+      // Умное ожидание API для появления товара в корзине
+      const responsePromise = this.page.waitForResponse(
+        (response) => ['POST', 'PUT', 'PATCH'].includes(response.request().method()),
+        { timeout: 3000 }
+      ).catch(() => {});
+
       await this.clickElement(addButton, `Кнопка "В корзину" для ${productName}`);
+      await responsePromise;
     });
   }
 
