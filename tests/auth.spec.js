@@ -1,4 +1,7 @@
 const { test, expect } = require('@playwright/test');
+const { ADMIN, USER } = require('../test-data/credentials'); 
+
+const { generateTestUser } = require('../test-data/userData');
 
 const { LoginPage } = require('../pages/LoginPage');
 const { Header } = require('../pages/Header');
@@ -6,131 +9,105 @@ const { RegisterPage } = require('../pages/RegisterPage');
 
 test.describe('Auth & Registration Module', () => {
 
-  test('TC#1: Admin should be able to login with valid credentials @TC1', async ({ page }) => {
-    const loginPage = new LoginPage(page);
+  let loginPage; 
+
+  test.beforeEach(async ({ page }) => {
+    loginPage = new LoginPage(page);
     await loginPage.navigate();
-    await loginPage.login('admin@test.com', 'admin123');
+  });
+
+  test('TC#1: Admin should be able to login with valid credentials @TC1', async ({ page }) => {
+    await loginPage.login(ADMIN.email, ADMIN.password);
     
-    await expect(page).toHaveURL('/');
-    const notification = page.locator('[data-sonner-toast] [data-title]').first();
-    await expect(notification).toContainText('Вход выполнен успешно!');
+    await loginPage.verifySuccessfulLogin();
+    await loginPage.verifyNotificationText('Вход выполнен успешно!');
   });
 
   test('TC#2: User should be able to login with valid credentials @TC2', async ({ page }) => {
-    const loginPage = new LoginPage(page);
-    await loginPage.navigate();
-    await loginPage.login('user1@test.com', 'user123');
+    await loginPage.login(USER.email, USER.password);
     
-    await expect(page).toHaveURL('/');
-    const notification = page.locator('[data-sonner-toast] [data-title]').first();
-    await expect(notification).toContainText('Вход выполнен успешно!');
+    await loginPage.verifySuccessfulLogin();
+    await loginPage.verifyNotificationText('Вход выполнен успешно!');
   });
 
   test('TC#3: User should be redirected to the Registration page @TC3', async ({ page }) => {
-    const loginPage = new LoginPage(page);
-    await loginPage.navigate();
     await loginPage.navigateToRegistration();
   });
 
   test('TC#4: User should be able to Logout successfully @TC4', async ({ page }) => {
-    const loginPage = new LoginPage(page);
     const header = new Header(page);
 
-    await loginPage.navigate();
-    await loginPage.login('user1@test.com', 'user123');
-    await expect(page).toHaveURL('/');
+    await loginPage.login(USER.email, USER.password);
+    await loginPage.verifySuccessfulLogin();
+    await loginPage.verifyNotificationText('Вход выполнен успешно!');
 
     await header.logout();
 
-    await page.goto('/orders');
-    await expect(page).toHaveURL('/login');
+    await loginPage.verifyAccessDenied('/orders');
   });
 
   test('TC#5: User Registration: Successful flow @TC5', async ({ page }) => {
     const registerPage = new RegisterPage(page);
     await registerPage.navigate();
 
-    const uniqueId = Date.now();
-    await registerPage.register({
-      firstName: 'Тест',
-      lastName: 'Юзер',
-      email: `newuser_${uniqueId}@test.com`,
-      username: `user_${uniqueId}`,
-      phone: '+79991234567',
-      password: 'password123'
-    });
+    const newUser = generateTestUser();
+    await registerPage.register(newUser);
 
-    await expect(registerPage.notificationMessage).toContainText('Регистрация прошла успешно! Теперь вы можете войти.');
-
-    await expect(page).toHaveURL('/login');
+    await registerPage.verifyNotificationText('Регистрация прошла успешно! Теперь вы можете войти.');
+    await registerPage.verifySuccessfulRegistration();
   });
 
   test('TC#6: Registration: Field Validation (Phone & Password) @TC6', async ({ page }) => {
     const registerPage = new RegisterPage(page);
     await registerPage.navigate();
 
-    await registerPage.register({
-      firstName: 'Тест',
-      lastName: 'Юзер',
-      email: `test_${Date.now()}@test.com`,
-      username: `user_${Date.now()}`,
-      phone: '123', // Невалидный короткий номер
-      password: '123' // Короткий пароль
+    const invalidUser = generateTestUser({
+      phone: '123',
+      password: '123'
     });
+    await registerPage.register(invalidUser);
 
     // проверка пароля
-    const passwordLabel = page.locator('label').filter({ hasText: 'Пароль' });
-    await expect(passwordLabel).toHaveClass(/text-destructive/);
-    await expect(passwordLabel).toHaveCSS('color', 'rgb(127, 29, 29)');
-    await expect(registerPage.passwordInput).toBeFocused();
+    await registerPage.verifyPasswordValidationError();
 
     // исправляем пароль
-    await registerPage.passwordInput.fill('ValidPassword123!');
-    await registerPage.registerButton.click();
+    await registerPage.fixPasswordAndSubmit('ValidPassword123!');
 
-    // проверка телефона
-    await expect(registerPage.notificationMessage).toBeVisible();
-    await expect(registerPage.notificationMessage).toContainText('phoneNumber must be in international format (starting with +)');
-
-    await expect(page).toHaveURL('/register');
+    // проверка телефона и что находимся на странице /register
+    await registerPage.verifyNotificationText('phoneNumber must be in international format (starting with +)');
+    await registerPage.verifyRemainsOnPage();
   });
 
   test('TC#7: Registration: Duplicate Email Validation @TC7', async ({ page }) => {
     const registerPage = new RegisterPage(page);
     await registerPage.navigate();
 
-    await registerPage.register({
-      firstName: 'Клон',
-      lastName: 'Админов',
-      email: 'admin@test.com', // существующий email
-      username: `clone_${Date.now()}`,
-      phone: '+79990001122',
-      password: 'password123'
+    const duplicateUser = generateTestUser({
+      email: ADMIN.email
     });
+    await registerPage.register(duplicateUser);
 
-    await expect(registerPage.notificationMessage).toContainText('Email "admin@test.com" already exists.'); 
-    await expect(page).toHaveURL('/register');
+    await registerPage.verifyRemainsOnPage(`Email "${ADMIN.email}" already exists.`);
+    await registerPage.verifyRemainsOnPage();
   });
 
   test('TC#8: User should not be able to login with invalid password @TC8', async ({ page }) => {
     const loginPage = new LoginPage(page);
     await loginPage.navigate();
     
-    await loginPage.login('user1@test.com', 'wrongpassword');
+    await loginPage.login(USER.email, 'wrongpassword');
 
-    const errorMessage = await loginPage.getErrorMessageText();
-    expect(errorMessage).toContain('Неверный email или пароль'); 
-    await expect(page).toHaveURL('/login');
+    await loginPage.verifyErrorMessageText('Неверный email или пароль'); 
+    await loginPage.verifyRemainsOnPage();
   });
 
   test('TC#9: User should see validation errors for empty fields @TC9', async ({ page }) => {
     const loginPage = new LoginPage(page);
     await loginPage.navigate();
 
-    await loginPage.loginButton.click();
+    await loginPage.clickLoginButton();
 
-    await expect(page.getByText('Email обязателен')).toBeVisible();
-    await expect(page.getByText('Пароль обязателен')).toBeVisible();
+    await loginPage.verifyEmptyFieldsErrors();
   });
 
 });
