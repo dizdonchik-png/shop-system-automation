@@ -53,14 +53,52 @@ class CartPage extends BasePage {
   }
 
   // Проверка, что корзина пуста
-  async isEmpty() {
-    return await this.emptyMessage.isVisible();
+  async verifyCartIsEmpty() {
+    await expect(this.emptyMessage).toBeVisible();
+    await expect(this.totalPrice).toContainText('0');
+    await expect(this.checkoutButton).toBeDisabled();
   }
 
-  // Получить текст уведомления
-  async getNotificationText() {
-    return await this.getElementText(this.toastMessage, 'Уведомление корзины');
+  // Проверка корректного отображения содержимого корзины (когда она не пуста)
+  async verifyCartContentLoaded() {
+    await expect(this.title).toBeVisible();
+    await expect(this.totalPrice).toBeVisible();
+    await expect(this.checkoutButton).toBeEnabled();
+    await expect(this.cartItemRow.first().getByRole('button', { name: 'Удалить' })).toBeVisible();
   }
+
+  // Проверка, что конкретный товар отображается в корзине
+  async verifyProductInCart(productName) {
+    const itemRow = this.cartItemRow.filter({ hasText: productName });
+    await expect(itemRow).toBeVisible();
+  }
+
+  // Проверка, что блок итоговой суммы не пустой
+  async verifyTotalPriceNotEmpty() {
+    await expect(this.totalPrice).not.toBeEmpty();
+  }
+
+  // Проверка текста уведомления
+  async verifyNotificationText(expectedText) {
+    await expect(this.toastMessage.first()).toBeVisible();
+    await expect(this.toastMessage.first()).toContainText(expectedText);
+  }
+
+  // Получение итоговой суммы в виде чистого числа
+  async getNumericTotalPrice() {
+    await expect(this.totalPrice).toBeVisible(); 
+    const priceText = await this.totalPrice.textContent();
+    return parseInt(priceText.replace(/\D/g, ''), 10);
+  }
+
+  // Умная проверка уменьшения цены
+  async verifyTotalPriceDecreased(previousPrice) {
+    await expect(async () => {
+      const currentPrice = await this.getNumericTotalPrice();
+      expect(currentPrice).toBeLessThan(previousPrice);
+    }).toPass();
+  }
+
 }
 
 module.exports = { CartPage };

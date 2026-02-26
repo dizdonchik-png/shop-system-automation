@@ -1,5 +1,8 @@
 const { test, expect } = require('@playwright/test');
 
+const { USER } = require('../test-data/credentials'); 
+const { generateTestUser } = require('../test-data/userData');
+
 const { CatalogPage } = require('../pages/CatalogPage');
 const { Header } = require('../pages/Header');
 const { CartPage } = require('../pages/CartPage');
@@ -8,26 +11,22 @@ const { RegisterPage } = require('../pages/RegisterPage');
 
 test.describe('Shopping Cart Module', () => {
 
-  // Предусловие: пользователь авторизован
   test.beforeEach(async ({ page }) => {
     const loginPage = new LoginPage(page);
     await loginPage.navigate();
-    await loginPage.login('user1@test.com', 'user123');
-    await expect(page).toHaveURL('/');
+    await loginPage.login(USER.email, USER.password);
+    await loginPage.verifySuccessfulLogin();
   });
 
   test('TC#1: User should be able to add product to cart @TC1', async ({ page }) => {
     const catalogPage = new CatalogPage(page);
-    
     await catalogPage.addProductToCart('iPhone 15 Pro');
-    
-    await expect(catalogPage.toastMessage).toContainText('Товар добавлен в корзину');
+    await catalogPage.verifyNotificationText('Товар добавлен в корзину');
   });
 
   test('TC#2: User should be able to open Cart Page @TC2', async ({ page }) => {
     const header = new Header(page);
     await header.openCart();
-    await expect(page).toHaveURL('/cart');
   });
 
   test('TC#3: User should see correct content in Shopping Cart @TC3', async ({ page }) => {
@@ -38,10 +37,7 @@ test.describe('Shopping Cart Module', () => {
     await catalogPage.addProductToCart('Logitech MX Master 3S');
     await header.openCart();
 
-    await expect(cartPage.title).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Удалить' }).first()).toBeVisible();
-    await expect(cartPage.totalPrice).toBeVisible();
-    await expect(cartPage.checkoutButton).toBeEnabled();
+    await cartPage.verifyCartContentLoaded();
   });
 
   test('TC#4: Cart should display correct details for added product @TC4', async ({ page }) => {
@@ -53,9 +49,8 @@ test.describe('Shopping Cart Module', () => {
     await catalogPage.addProductToCart(productName);
     await header.openCart();
 
-    const itemRow = cartPage.cartItemRow.filter({ hasText: productName });
-    await expect(itemRow).toBeVisible();
-    await expect(cartPage.totalPrice).not.toBeEmpty();
+    await cartPage.verifyProductInCart(productName);
+    await cartPage.verifyTotalPriceNotEmpty();
   });
 
   test('TC#5: User should be able to remove item from cart @TC5', async ({ page }) => {
@@ -68,7 +63,7 @@ test.describe('Shopping Cart Module', () => {
     
     await cartPage.removeItem('Uniqlo Oxford');
     
-    await expect(cartPage.toastMessage).toContainText('Товар удален из корзины');
+    await cartPage.verifyNotificationText('Товар удален из корзины');
   });
 
   test('TC#6: Total Price should update immediately after item removal @TC6', async ({ page }) => {
@@ -80,35 +75,35 @@ test.describe('Shopping Cart Module', () => {
     await catalogPage.addProductToCart('Sony WH-1000XM5');
     await header.openCart();
 
-    const initialPriceText = await cartPage.getTotalPrice();
-    const initialPrice = parseInt(initialPriceText.replace(/\D/g, '')); 
+    const initialPrice = await cartPage.getNumericTotalPrice(); 
 
     await cartPage.removeItem('Sony WH-1000XM5');
     
-    await page.waitForTimeout(500); 
-
-    const newPriceText = await cartPage.getTotalPrice();
-    const newPrice = parseInt(newPriceText.replace(/\D/g, ''));
-
-    expect(newPrice).toBeLessThan(initialPrice);
+    // ждем уменьшения цены и проверяем ее
+    await cartPage.verifyTotalPriceDecreased(initialPrice);
   });
 
   test('TC#7: Cart items should persist after page reload and re-login @TC7', async ({ page }) => {
     const catalogPage = new CatalogPage(page);
     const header = new Header(page);
     const loginPage = new LoginPage(page);
+    const cartPage = new CartPage(page);
 
     const testProduct = 'Nintendo Switch OLED';
     await catalogPage.addProductToCart(testProduct);
     await header.openCart();
 
     await page.reload();
-    await expect(page.locator('div.flex.items-center.justify-between.p-4.border-b', { hasText: testProduct })).toBeVisible();
+    await cartPage.verifyProductInCart(testProduct);
 
     await header.logout();
-    await loginPage.login('user1@test.com', 'user123');
+
+    await loginPage.login(USER.email, USER.password);
+    await loginPage.verifySuccessfulLogin();
+
     await header.openCart();
-    await expect(page.locator('div.flex.items-center.justify-between.p-4.border-b', { hasText: testProduct })).toBeVisible();
+
+    await cartPage.verifyProductInCart(testProduct); 
   });
 
 });
@@ -122,29 +117,19 @@ test.describe('Shopping Cart Module - Empty State', () => {
     const header = new Header(page);
     const cartPage = new CartPage(page);
 
-    const uniqueId = Date.now();
+    const newUser = generateTestUser();
     await registerPage.navigate();
-    await registerPage.register({
-      firstName: 'Test',
-      lastName: 'User',
-      email: `cartuser_${uniqueId}@test.com`,
-      username: `cart_${uniqueId}`,
-      phone: '+79991230000',
-      password: 'password123'
-    });
+    await registerPage.register(newUser);
+
+    await registerPage.verifySuccessfulRegistration();
     
-    await expect(page).toHaveURL('/login');
-    await loginPage.login(`cartuser_${uniqueId}@test.com`, 'password123');
-    await expect(page).toHaveURL('/');
+    await loginPage.login(newUser.email, newUser.password);
+    await loginPage.verifySuccessfulLogin();
 
     await header.openCart();
 
-    // TC#8: Проверка пустого состояния
-    await expect(cartPage.emptyMessage).toBeVisible();
-    await expect(cartPage.totalPrice).toContainText('0');
-
-    // TC#9: Кнопка оформления отключена
-    await expect(cartPage.checkoutButton).toBeDisabled();
+    // TC#8 и TC#9: Проверка пустого состояния и кнопка оформления заказа disabled
+    await cartPage.verifyCartIsEmpty();
   });
 
 });

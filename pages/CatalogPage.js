@@ -48,7 +48,7 @@ class CatalogPage extends BasePage {
   // Добавить товар в корзину по имени
   async addProductToCart(productName) {
     await this.step(`Добавление товара "${productName}" в корзину`, async () => {
-      const card = this.page.locator('a.group.flex').filter({ hasText: productName });
+      const card = this.page.locator('a.group.flex').filter({ hasText: productName }).first();
       const addButton = card.locator('button', { name: 'В корзину' });
       
       await this.clickElement(addButton, `Кнопка "В корзину" для ${productName}`);
@@ -65,8 +65,9 @@ class CatalogPage extends BasePage {
     return await this.page.locator('a.group.flex', { hasText: productName }).isVisible();
   }
 
-  async getNotificationText() {
-    return await this.getElementText(this.toastMessage, 'Тоаст уведомление');
+  async verifyNotificationText(expectedText) {
+    await expect(this.toastMessage.first()).toBeVisible();
+    await expect(this.toastMessage.first()).toContainText(expectedText);
   }
 
   // Получить случайный индекс карточки
