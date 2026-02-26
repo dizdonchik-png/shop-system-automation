@@ -33,8 +33,8 @@ class AdminPage extends BasePage {
 
     // --- Раздел "Склады" ---
     this.createWarehouseButton = page.getByRole('button', { name: 'Создать склад' });
-    this.warehouseNameInput = page.locator('input[placeholder="Название склада"]');
-    this.warehouseAddressInput = page.locator('input[placeholder="Адрес"]');
+    this.warehouseNameInput = page.getByLabel('Название склада');
+    this.warehouseAddressInput = page.getByLabel('Адрес');
 
     // Уведомления
     this.toastMessage = page.locator('[data-sonner-toast] [data-title]').first();
