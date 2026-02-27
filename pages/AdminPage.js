@@ -42,8 +42,6 @@ class AdminPage extends BasePage {
     this.warehouseNameInput = page.getByLabel('Название склада');
     this.warehouseAddressInput = page.getByLabel('Адрес');
 
-    // Уведомления
-    this.toastMessage = page.locator('[data-sonner-toast] [data-title]').first();
   }
 
   // Переход в админку
@@ -151,18 +149,6 @@ class AdminPage extends BasePage {
   async verifyOrderStatus(rowIndex, expectedStatus) {
     const orderRow = this.tableRows.nth(rowIndex);
     await expect(orderRow).toContainText(expectedStatus);
-  }
-
-  // Получить текст уведомления
-  async getNotificationText() {
-    return await this.getElementText(this.toastMessage, 'Уведомление админки');
-  }
-
-  // Ожидание скрытия уведомления (чтобы старый тостер не перекрывал новый)
-  async waitForNotificationToHide() {
-    return await this.step('Ожидание скрытия уведомления', async () => {
-      await expect(this.toastMessage).toBeHidden({ timeout: 10000 });
-    });
   }
 };
 

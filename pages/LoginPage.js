@@ -14,9 +14,6 @@ class LoginPage extends BasePage {
 
     this.loginButton = page.getByRole('button', { name: 'Войти'});
     
-    // Локатор для уведомлений
-    this.toastMessage = page.locator('[data-sonner-toast] [data-title]').first();
-    
     this.registerLink = page.getByRole('link', { name: /зарегистрироваться/i });
   }
 
@@ -52,23 +49,6 @@ class LoginPage extends BasePage {
   async verifyAccessDenied(protectedUrl) {
     await this.page.goto(protectedUrl);
     await expect(this.page).toHaveURL('/login');
-  }
-
-  // Метод для получения текста ошибки
-  async getToastMessageText() {
-    return await this.getElementText(this.toastMessage, 'Текст уведомления');
-  }
-
-  // Метод проверки текста уведомления
-  async verifyNotificationText(expectedText) {
-    await expect(this.toastMessage.first()).toBeVisible();
-    await expect(this.toastMessage.first()).toContainText(expectedText);
-  }
-
-  // Проверка текста основной ошибки (неверный email/пароль)
-  async verifyErrorMessageText(expectedText) {
-    const actualText = await this.getToastMessageText(); 
-    expect(actualText).toContain(expectedText);
   }
 
   // Проверка ошибок для пустых полей

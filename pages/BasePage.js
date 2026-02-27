@@ -3,6 +3,9 @@ const { expect } = require('@playwright/test');
 class BasePage {
   constructor(page) {
     this.page = page;
+
+    // локатор для уведомлений
+    this.toastMessage = page.locator('[data-sonner-toast] [data-title]').first();
   }
 
   async open(url) {
@@ -41,6 +44,21 @@ class BasePage {
         console.error(`❌ Элемент "${elementName}" не найден на странице!`);
         throw error;
       }
+    });
+  }
+
+  // Проверка текста уведомления
+  async verifyNotificationText(expectedText) {
+    await this.step(`Проверка текста уведомления: "${expectedText}"`, async () => {
+      await expect(this.toastMessage).toBeVisible();
+      await expect(this.toastMessage).toContainText(expectedText);
+    });
+  }
+
+  // Ожидание скрытия уведомления
+  async waitForNotificationToHide() {
+    return await this.step('Ожидание скрытия уведомления', async () => {
+      await expect(this.toastMessage).toBeHidden({ timeout: 10000 });
     });
   }
 

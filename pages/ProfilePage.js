@@ -13,7 +13,6 @@ class ProfilePage extends BasePage {
 
     this.saveButton = page.getByRole('button', { name: 'Сохранить изменения'});
 
-    this.notificationMessage = page.locator('[data-sonner-toast] [data-title]').first();
   }
 
   // Переход на страницу Профиля
@@ -34,10 +33,6 @@ class ProfilePage extends BasePage {
     });
   }
 
-  // Получить текст уведомления
-  async getNotificationText() {
-    return await this.getElementText(this.notificationMessage, 'Уведомление профиля');
-  }
 }
 
 module.exports = { ProfilePage };
