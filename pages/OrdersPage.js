@@ -1,8 +1,10 @@
 const { expect } = require('@playwright/test');
+const { BasePage } = require('./BasePage');
 
-class OrdersPage {
+class OrdersPage extends BasePage {
   constructor(page) {
-    this.page = page;
+    super(page);
+    
     this.pageTitle = page.getByRole('heading', { name: 'Мои заказы' });
     this.lastOrder = page.locator('div.rounded-xl').last();
 
@@ -24,7 +26,8 @@ class OrdersPage {
 
   // Раскрытие деталей заказа
   async openLastOrderDetails() {
-    await this.lastOrder.locator('button').first().click();
+    const expandButton = this.lastOrder.locator('button').first();
+    await this.clickElement(expandButton, 'Кнопка раскрытия деталей последнего заказа');
   }
 
   // Проверка содержимого заказа

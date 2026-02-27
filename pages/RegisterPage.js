@@ -18,7 +18,6 @@ class RegisterPage extends BasePage {
     
     this.loginLink = page.getByRole('link', { name: 'Войти'});
 
-    this.notificationMessage = page.locator('[data-sonner-toast] [data-title]').first();
   }
 
   // Переход на страницу регистрации
@@ -44,12 +43,6 @@ class RegisterPage extends BasePage {
   async navigateToLogin() {
     await this.clickElement(this.loginLink, 'Ссылка Войти');
     await expect(this.page).toHaveURL('/login');
-  }
-
-  // Проверка текста во всплывающем уведомлении
-  async verifyNotificationText(expectedText) {
-    await expect(this.notificationMessage).toBeVisible();
-    await expect(this.notificationMessage).toContainText(expectedText);
   }
 
   // Проверка успешного редиректа на страницу логина

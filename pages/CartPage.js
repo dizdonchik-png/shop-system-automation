@@ -17,8 +17,6 @@ class CartPage extends BasePage {
 
     this.emptyMessage = page.getByText('Ваша корзина пуста.');
 
-    // Уведомления
-    this.toastMessage = page.locator('[data-sonner-toast] [data-title]').first();
   }
 
   async navigate() {
@@ -81,12 +79,6 @@ class CartPage extends BasePage {
   // Проверка, что блок итоговой суммы не пустой
   async verifyTotalPriceNotEmpty() {
     await expect(this.totalPrice).not.toBeEmpty();
-  }
-
-  // Проверка текста уведомления
-  async verifyNotificationText(expectedText) {
-    await expect(this.toastMessage.first()).toBeVisible();
-    await expect(this.toastMessage.first()).toContainText(expectedText);
   }
 
   // Получение итоговой суммы в виде чистого числа

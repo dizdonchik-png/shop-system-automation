@@ -1,6 +1,8 @@
 const { test, expect } = require('@playwright/test');
 
 const { USER } = require('../test-data/credentials'); 
+const { TEST_PRODUCTS } = require('../test-data/products'); 
+const { loginAs } = require('../test-data/helpers'); 
 
 const { CatalogPage } = require('../pages/CatalogPage');
 const { Header } = require('../pages/Header');
@@ -9,10 +11,7 @@ const { LoginPage } = require('../pages/LoginPage');
 test.describe('Main Page & Catalog Module', () => {
 
   test.beforeEach(async ({ page }) => {
-    const loginPage = new LoginPage(page);
-    await loginPage.navigate();
-    await loginPage.login(USER.email, USER.password);
-    await loginPage.verifySuccessfulLogin(); 
+    await loginAs(page, USER); 
   });
 
   test('TC#1: Catalog should display all seeded products @TC1', async ({ page }) => {
@@ -25,7 +24,7 @@ test.describe('Main Page & Catalog Module', () => {
 
   test('TC#2: User should be able to navigate to Home page via Logo @TC2', async ({ page }) => {
     const header = new Header(page);
-    await page.goto('/cart');
+    await header.openOrders();
     await header.navigateHome();
   });
 
@@ -35,7 +34,6 @@ test.describe('Main Page & Catalog Module', () => {
     
     // создаем случайный индекс
     const randomIndex = await catalogPage.getRandomProductCardIndex();
-    
     // получаем данные случайной карточки товара
     const productData = await catalogPage.getProductDetailsFromCatalog(randomIndex);
     
@@ -50,7 +48,7 @@ test.describe('Main Page & Catalog Module', () => {
     const catalogPage = new CatalogPage(page);
     await catalogPage.navigate();
     
-    await catalogPage.openProductDetails('Uniqlo Oxford');
+    await catalogPage.openProductDetails(TEST_PRODUCTS.UNIQLO);
     
     // проверяем наличие кнопки "Добавить в корзину"
     await catalogPage.verifyAddToCartButtonVisible();

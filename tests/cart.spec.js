@@ -1,6 +1,8 @@
 const { test, expect } = require('@playwright/test');
 
 const { USER } = require('../test-data/credentials'); 
+const { TEST_PRODUCTS } = require('../test-data/products'); 
+const { loginAs } = require('../test-data/helpers'); 
 const { generateTestUser } = require('../test-data/userData');
 
 const { CatalogPage } = require('../pages/CatalogPage');
@@ -12,15 +14,12 @@ const { RegisterPage } = require('../pages/RegisterPage');
 test.describe('Shopping Cart Module', () => {
 
   test.beforeEach(async ({ page }) => {
-    const loginPage = new LoginPage(page);
-    await loginPage.navigate();
-    await loginPage.login(USER.email, USER.password);
-    await loginPage.verifySuccessfulLogin();
+    await loginAs(page, USER);
   });
 
   test('TC#1: User should be able to add product to cart @TC1', async ({ page }) => {
     const catalogPage = new CatalogPage(page);
-    await catalogPage.addProductToCart('iPhone 15 Pro');
+    await catalogPage.addProductToCart(TEST_PRODUCTS.IPHONE);
     await catalogPage.verifyNotificationText('Товар добавлен в корзину');
   });
 
@@ -34,7 +33,7 @@ test.describe('Shopping Cart Module', () => {
     const header = new Header(page);
     const cartPage = new CartPage(page);
 
-    await catalogPage.addProductToCart('Logitech MX Master 3S');
+    await catalogPage.addProductToCart(TEST_PRODUCTS.LOGITECH);
     await header.openCart();
 
     await cartPage.verifyCartContentLoaded();
@@ -45,11 +44,10 @@ test.describe('Shopping Cart Module', () => {
     const header = new Header(page);
     const cartPage = new CartPage(page);
 
-    const productName = 'DJI Mini 3 Pro';
-    await catalogPage.addProductToCart(productName);
+    await catalogPage.addProductToCart(TEST_PRODUCTS.DJI);
     await header.openCart();
 
-    await cartPage.verifyProductInCart(productName);
+    await cartPage.verifyProductInCart(TEST_PRODUCTS.DJI);
     await cartPage.verifyTotalPriceNotEmpty();
   });
 
@@ -58,10 +56,10 @@ test.describe('Shopping Cart Module', () => {
     const header = new Header(page);
     const cartPage = new CartPage(page);
 
-    await catalogPage.addProductToCart('Uniqlo Oxford');
+    await catalogPage.addProductToCart(TEST_PRODUCTS.UNIQLO);
     await header.openCart();
     
-    await cartPage.removeItem('Uniqlo Oxford');
+    await cartPage.removeItem(TEST_PRODUCTS.UNIQLO);
     
     await cartPage.verifyNotificationText('Товар удален из корзины');
   });
@@ -71,13 +69,17 @@ test.describe('Shopping Cart Module', () => {
     const header = new Header(page);
     const cartPage = new CartPage(page);
 
-    await catalogPage.addProductToCart('iPhone 15 Pro');
-    await catalogPage.addProductToCart('Sony WH-1000XM5');
+    await catalogPage.addProductToCart(TEST_PRODUCTS.IPHONE);
+    await catalogPage.verifyNotificationText('Товар добавлен в корзину');
+
+    await catalogPage.addProductToCart(TEST_PRODUCTS.SONY);
+    await catalogPage.verifyNotificationText('Товар добавлен в корзину');
+
     await header.openCart();
 
     const initialPrice = await cartPage.getNumericTotalPrice(); 
 
-    await cartPage.removeItem('Sony WH-1000XM5');
+    await cartPage.removeItem(TEST_PRODUCTS.SONY);
     
     // ждем уменьшения цены и проверяем ее
     await cartPage.verifyTotalPriceDecreased(initialPrice);
@@ -89,12 +91,11 @@ test.describe('Shopping Cart Module', () => {
     const loginPage = new LoginPage(page);
     const cartPage = new CartPage(page);
 
-    const testProduct = 'Nintendo Switch OLED';
-    await catalogPage.addProductToCart(testProduct);
+    await catalogPage.addProductToCart(TEST_PRODUCTS.NINTENDO);
     await header.openCart();
 
     await page.reload();
-    await cartPage.verifyProductInCart(testProduct);
+    await cartPage.verifyProductInCart(TEST_PRODUCTS.NINTENDO);
 
     await header.logout();
 
@@ -103,7 +104,7 @@ test.describe('Shopping Cart Module', () => {
 
     await header.openCart();
 
-    await cartPage.verifyProductInCart(testProduct); 
+    await cartPage.verifyProductInCart(TEST_PRODUCTS.NINTENDO); 
   });
 
 });

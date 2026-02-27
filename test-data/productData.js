@@ -9,4 +9,15 @@ function generateTestProduct() {
   };
 }
 
-module.exports = { generateTestProduct };
+function generateTestWarehouse() {
+  const uniqueId = Date.now();
+  return {
+    name: `Склад ${uniqueId}`,
+    address: `Адрес ${uniqueId}`
+  };
+}
+
+module.exports = { 
+  generateTestProduct, 
+  generateTestWarehouse
+};

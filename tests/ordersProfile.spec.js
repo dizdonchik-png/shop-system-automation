@@ -1,9 +1,10 @@
 const { test, expect } = require('@playwright/test');
 
 const { USER } = require('../test-data/credentials'); 
+const { TEST_PRODUCTS } = require('../test-data/products'); 
+const { loginAs } = require('../test-data/helpers'); 
 const { generateTestUser } = require('../test-data/userData');
 
-const { LoginPage } = require('../pages/LoginPage');
 const { Header } = require('../pages/Header');
 const { CatalogPage } = require('../pages/CatalogPage');
 const { CartPage } = require('../pages/CartPage');
@@ -13,10 +14,7 @@ const { OrdersPage } = require('../pages/OrdersPage');
 test.describe('Orders & Profile Module', () => {
 
   test.beforeEach(async ({ page }) => {
-    const loginPage = new LoginPage(page);
-    await loginPage.navigate();
-    await loginPage.login(USER.email, USER.password);
-    await loginPage.verifySuccessfulLogin();
+    await loginAs(page, USER);
   });
 
   test('TC#1: User should be able to place an order @TC1', async ({ page }) => {
@@ -24,7 +22,7 @@ test.describe('Orders & Profile Module', () => {
     const header = new Header(page);
     const cartPage = new CartPage(page);
 
-    await catalogPage.addProductToCart('iPhone 15 Pro');
+    await catalogPage.addProductToCart(TEST_PRODUCTS.IPHONE);
     await catalogPage.verifyNotificationText('Товар добавлен в корзину'); 
 
     await header.openCart();
@@ -41,8 +39,7 @@ test.describe('Orders & Profile Module', () => {
     const ordersPage = new OrdersPage(page);
 
     // ПРЕДУСЛОВИЕ: Оформляем заказ
-    const testProduct = 'Nintendo Switch OLED';
-    await catalogPage.addProductToCart(testProduct);
+    await catalogPage.addProductToCart(TEST_PRODUCTS.NINTENDO);
     await catalogPage.verifyNotificationText('Товар добавлен в корзину'); 
 
     await header.openCart();
@@ -58,7 +55,7 @@ test.describe('Orders & Profile Module', () => {
 
     // Проверяем раскрытие деталей аккордеона (TC#3)
     await ordersPage.openLastOrderDetails();
-    await ordersPage.verifyOrderDetailsContains(testProduct);
+    await ordersPage.verifyOrderDetailsContains(TEST_PRODUCTS.NINTENDO);
   });
 
   test('TC#4: User should be able to update Profile info @TC4', async ({ page }) => {

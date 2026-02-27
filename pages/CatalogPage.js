@@ -30,7 +30,6 @@ class CatalogPage extends BasePage {
     this.loadingMessage = page.getByText('Загрузка продукта...');
     this.errorMessage = page.getByText('Ошибка: Не удалось загрузить продукт');
 
-    this.toastMessage = page.locator('[data-sonner-toast] [data-title]').first();
   }
 
   async navigate() {
@@ -72,11 +71,6 @@ class CatalogPage extends BasePage {
     return await this.page.locator('a.group.flex', { hasText: productName }).isVisible();
   }
 
-  async verifyNotificationText(expectedText) {
-    await expect(this.toastMessage.first()).toBeVisible();
-    await expect(this.toastMessage.first()).toContainText(expectedText);
-  }
-
   // Получить случайный индекс карточки
   async getRandomProductCardIndex() {
     const count = await this.productCard.count();
@@ -95,7 +89,8 @@ class CatalogPage extends BasePage {
 
   // Кликнуть по товару по его индексу
   async openProductByIndex(index) {
-    await this.productCard.nth(index).click();
+    const card = this.productCard.nth(index);
+    await this.clickElement(card, `Карточка товара под индексом ${index}`);
     await expect(this.page).toHaveURL(/\/product\/\d+/);
   }
 

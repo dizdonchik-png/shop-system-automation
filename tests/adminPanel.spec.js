@@ -1,7 +1,8 @@
 const { test, expect } = require('@playwright/test');
 const { ADMIN } = require('../test-data/credentials'); 
 
-const { generateTestProduct } = require('../test-data/productData'); 
+const { loginAs } = require('../test-data/helpers'); 
+const { generateTestProduct, generateTestWarehouse } = require('../test-data/productData'); 
 
 const { LoginPage } = require('../pages/LoginPage');
 const { AdminPage } = require('../pages/AdminPage');
@@ -10,10 +11,7 @@ test.describe('Admin Panel Module', () => {
 
   // Логинимся под АДМИНОМ
   test.beforeEach(async ({ page }) => {
-    const loginPage = new LoginPage(page);
-    await loginPage.navigate();
-    await loginPage.login(ADMIN.email, ADMIN.password); 
-    await expect(page).toHaveURL('/');
+    await loginAs(page, ADMIN);
 
     const adminPage = new AdminPage(page);
     await adminPage.navigate();
@@ -31,7 +29,6 @@ test.describe('Admin Panel Module', () => {
 
   test('TC#3: Dashboard Overview content @TC3', async ({ page }) => {
     const adminPage = new AdminPage(page);
-
     await adminPage.verifyDashboardLoaded();
   });
 
@@ -42,8 +39,7 @@ test.describe('Admin Panel Module', () => {
     const testProduct = generateTestProduct(); 
     await adminPage.createProduct(testProduct);
 
-    const toastText = await adminPage.getNotificationText();
-    expect(toastText).toContain('Товар успешно создан');
+    await adminPage.verifyNotificationText('Товар успешно создан');
   });
 
   test('TC#5: Edit existing product details @TC5', async ({ page }) => {
@@ -53,15 +49,13 @@ test.describe('Admin Panel Module', () => {
     const testProduct = generateTestProduct(); 
     await adminPage.createProduct(testProduct);
 
-    const createToast = await adminPage.getNotificationText();
-    expect(createToast).toContain('Товар успешно создан');
+    await adminPage.verifyNotificationText('Товар успешно создан');
     // ждем пока уведомление скроется
-    await adminPage.waitForNotificationToHide(); 
+    await adminPage.waitForNotificationToHide();
 
     await adminPage.editProductPrice(testProduct.name, 250);
 
-    const toastTextUpdate = await adminPage.getNotificationText();
-    expect(toastTextUpdate).toContain('Товар успешно обновлен');
+    await adminPage.verifyNotificationText('Товар успешно обновлен');
   });
 
   test('TC#6: Delete Product @TC6', async ({ page }) => {
@@ -71,26 +65,22 @@ test.describe('Admin Panel Module', () => {
     const testProduct = generateTestProduct();
     await adminPage.createProduct(testProduct);
     
-    const createToast = await adminPage.getNotificationText();
-    expect(createToast).toContain('Товар успешно создан');
-    // ждем пока уведомление скроется
+    await adminPage.verifyNotificationText('Товар успешно создан');
     await adminPage.waitForNotificationToHide(); 
 
     await adminPage.deleteProduct(testProduct.name);
 
-    const deleteToast = await adminPage.getNotificationText();
-    expect(deleteToast).toContain('Товар удален');
+    await adminPage.verifyNotificationText('Товар удален');
   });
 
   test('TC#7: Create a new warehouse @TC7', async ({ page }) => {
     const adminPage = new AdminPage(page);
     await adminPage.openWarehouses();
 
-    const uniqueId = Date.now();
-    await adminPage.createWarehouse(`Склад ${uniqueId}`, `Адрес ${uniqueId}`);
-
-    const toastText = await adminPage.getNotificationText();
-    expect(toastText).toContain('Склад создан');
+    const newWarehouse = generateTestWarehouse();
+    await adminPage.createWarehouse(newWarehouse.name, newWarehouse.address);
+    
+    await adminPage.verifyNotificationText('Склад создан');
   });
 
   test('TC#8: Update Order Status @TC8', async ({ page }) => {
